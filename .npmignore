@@ -1,3 +1,4 @@
+.vscode/
 src/
 tests/
 jest.config.js
