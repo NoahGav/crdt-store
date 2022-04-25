@@ -10,12 +10,13 @@ export type Infer<TSchema extends Schema>
   : TSchema extends superstruct.Struct<any, any> ? superstruct.Infer<TSchema>
   : never;
 
-/**
- * A transaction describes a mutation of the store's state. This mutation
- * can be applied regardless of if you are online or offline.
- */
-export type Transaction<TSchema extends Schema, TInput extends Schema>
-  = (store: Infer<TSchema>, input: Infer<TInput>) => void;
+export type Mutation<TSchema extends Schema, TInput extends Schema>
+  = (state: Infer<TSchema>, input: Infer<TInput>) => void;
+
+export type Transaction<TSchema extends Schema, TInput extends Schema> = {
+  input: TInput;
+  mutate: Mutation<TSchema, TInput>;
+}
 
 export type AnyTransaction = Transaction<any, any>;
 export type Transactions = Record<string, AnyTransaction>;

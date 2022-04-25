@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { Infer, Schema, Transaction, Transactions } from "./types";
+import { Infer, Mutation, Schema, Transaction, Transactions } from "./types";
 
 /**
  * A store defines the schema and the transactions for a crdt
@@ -13,51 +13,43 @@ class Store<
   TTransactions extends Transactions = {}
 > {
   _def: {
-    schema?: TSchema,
+    schema: TSchema,
     transactions: TTransactions
   };
 
   constructor(def?: {
-    schema?: TSchema,
+    schema: TSchema,
     transactions?: TTransactions
   }) {
     this._def = {
-      schema: def?.schema,
+      schema: (def?.schema ?? {}) as TSchema,
       transactions: (def?.transactions ?? {}) as TTransactions
     };
   }
 
-  /** Creates a store (with an optional schema). */
-  static create(): Store<any>;
-  static create<TSchema extends Schema>(schema?: TSchema): Store<TSchema>;
-  static create<TSchema extends Schema>(schema?: TSchema): Store<TSchema> {
+  /** Creates a store with the given schema. */
+  static create<TSchema extends Schema>(schema: TSchema): Store<TSchema> {
     return new Store({ schema });
   }
 
-  /** Adds a new transaction to this store (with an optional input schema). */
-  transaction<
-    TName extends string
-  >(
-    name: TName,
-    transaction: Transaction<TSchema, any>
-  ): Store<
-    TSchema,
-    TTransactions & Record<TName, typeof transaction>
-  >;
-
+  /**
+   * Adds a new transaction to this store. A transaction applies
+   * one or more mutations to the store's state. The mutations
+   * can be applied whether or not the client is online. The
+   * state will automatically be synchronized when the client
+   * comes back online.
+   */
   transaction<
     TName extends string,
     TInput extends Schema
   >(
     name: TName,
     input: TInput,
-    transaction: Transaction<TSchema, TInput>
+    mutate: Mutation<TSchema, TInput>
   ): Store<
     TSchema,
-    TTransactions & Record<TName, typeof transaction>
-  >;
-
-  transaction(name: string, inputOrTransaction: unknown, maybeTransaction?: unknown) {
+    TTransactions & Record<TName, Transaction<TSchema, TInput>>
+  > {
     // TODO - Merge this store and the new store with the transaction.
     return new Store();
   }
@@ -69,12 +61,12 @@ const store = Store
     name: z.string(),
     users: z.set(z.string())
   }))
-  .transaction('setName', z.string(), (store, newName) => {
-    store.name = newName;
+  .transaction('setName', z.string(), (state, newName) => {
+    state.name = newName;
   })
-  .transaction('addUser', z.string(), (store, userId) => {
-    store.users.add(userId);
+  .transaction('addUser', z.string(), (state, userId) => {
+    state.users.add(userId);
   })
-  .transaction('removeUser', z.string(), (store, userId) => {
-    store.users.delete(userId);
+  .transaction('removeUser', z.string(), (state, userId) => {
+    state.users.delete(userId);
   });
