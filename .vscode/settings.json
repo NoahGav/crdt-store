@@ -1,0 +1,30 @@
+{
+  "files.exclude": {
+    "**/.git": true,
+    "**/.svn": true,
+    "**/.hg": true,
+    "**/CVS": true,
+    "**/.DS_Store": true,
+    "**/Thumbs.db": true,
+    "tsconfig.json": true,
+    "package-lock.json": true,
+    "jest.config.js": true,
+    ".npmignore": true,
+    ".gitignore": true,
+    "tests": true,
+    "node_modules": true,
+    "dist": true,
+    ".vscode": true
+  },
+  "hide-files.files": [
+    "tsconfig.json",
+    "package-lock.json",
+    "jest.config.js",
+    ".npmignore",
+    ".gitignore",
+    "tests",
+    "node_modules",
+    "dist",
+    ".vscode"
+  ]
+}
