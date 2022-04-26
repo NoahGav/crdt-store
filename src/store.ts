@@ -1,4 +1,3 @@
-import { z } from "zod";
 import { Infer, Mutation, Schema, Transaction, Transactions } from "./types";
 
 /**
@@ -8,23 +7,19 @@ import { Infer, Mutation, Schema, Transaction, Transactions } from "./types";
  * offline, the store's state will automatically be synced between
  * them.
  */
-class Store<
+export class Store<
   TSchema extends Schema,
   TTransactions extends Transactions = {}
 > {
-  _def: {
-    schema: TSchema,
-    transactions: TTransactions
-  };
+  private schema: TSchema;
+  private transactions: TTransactions;
 
   constructor(def?: {
     schema: TSchema,
     transactions?: TTransactions
   }) {
-    this._def = {
-      schema: (def?.schema ?? {}) as TSchema,
-      transactions: (def?.transactions ?? {}) as TTransactions
-    };
+    this.schema = (def?.schema ?? {}) as TSchema,
+    this.transactions = (def?.transactions ?? {}) as TTransactions
   }
 
   /** Creates a store with the given schema. */
@@ -53,20 +48,20 @@ class Store<
     // TODO - Merge this store and the new store with the transaction.
     return new Store();
   }
-}
 
-// TODO - Remove.
-const store = Store
-  .create(z.object({
-    name: z.string(),
-    users: z.set(z.string())
-  }))
-  .transaction('setName', z.string(), (state, newName) => {
-    state.name = newName;
-  })
-  .transaction('addUser', z.string(), (state, userId) => {
-    state.users.add(userId);
-  })
-  .transaction('removeUser', z.string(), (state, userId) => {
-    state.users.delete(userId);
-  });
+  /** 
+   * Creates (or loads if it already exists) the store
+   * with the given id and returns it's state.
+   */
+  checkout(id: string): Readonly<Infer<TSchema>> {
+    // TODO - checkout the store with the given id.
+    //        This store is either created or loaded
+    //        from some kind of database. The way
+    //        it is loaded, saved, and updated needs
+    //        to be generic. The object returned from
+    //        this needs to be a readonly proxy where
+    //        the only changes that are allowed come
+    //        from the transaction functions.
+    return {} as any;
+  }
+}
