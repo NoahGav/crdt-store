@@ -1,73 +1,47 @@
-import { z } from "zod";
-import * as yup from 'yup';
-import * as superstruct from 'superstruct';
-import { Infer, Mutation, Schema, SuperStructSchema, Transaction, Transactions, YupSchema, ZodSchema } from "./types";
+import { CheckoutOptions, OpenOptions, Schema, Transaction, Transactions } from "./types"
 
-/**
- * A store defines the schema and the transactions for a crdt
- * (conflict free replicated data type). A store's state can be
- * shared by any number of clients. Whether the clients are online or
- * offline, the store's state will automatically be synced between
- * them.
- */
 export class Store<
   TSchema extends Schema,
-  TTransactions extends Transactions = {}
+  TTransactions extends Transactions
 > {
   private schema: TSchema;
   private transactions: TTransactions;
 
-  constructor(def?: {
-    schema: TSchema,
+  private constructor(def?: {
+    schema?: TSchema,
     transactions?: TTransactions
   }) {
-    this.schema = (def?.schema ?? {}) as TSchema,
-    this.transactions = (def?.transactions ?? {}) as TTransactions
+    this.schema = (def?.schema ?? {}) as TSchema;
+    this.transactions = (def?.transactions ?? {}) as TTransactions;
   }
 
-  /** Creates a store with the given schema. */
-  static create<TSchema extends Schema>(schema: TSchema): Store<TSchema> {
-    return new Store({ schema });
+  /** Creates a new store with the given options. */
+  static open<TSchema extends Schema>(
+    options: OpenOptions<TSchema>
+  ): Store<TSchema, {}> {
+    return new Store({
+      schema: options.schema
+    });
   }
 
-  /**
-   * Adds a new transaction to this store. A transaction applies
-   * one or more mutations to the store's state. The mutations
-   * can be applied whether or not the client is online. The
-   * state will automatically be synchronized when the client
-   * comes back online.
-   */
+  /** Adds a transaction to the store. */
   transaction<
     TName extends string,
     TInput extends Schema
   >(
-    name: TName,
-    input: TInput,
-    mutate: Mutation<TSchema, TInput>
+    transaction: Transaction<TName, TSchema, TInput>
   ): Store<
     TSchema,
-    TTransactions & Record<TName, Transaction<TSchema, TInput>>
+    TTransactions & Record<TName, typeof transaction>
   > {
-    // Merge this transaction with the existing transactions.
-    this.transactions = {
-      ...this.transactions,
-      [name]: { input, mutate }
-    };
-
+    this.transactions[transaction.name] = transaction as any;
     return this;
   }
 
-  /** 
-   * Creates (or loads if it already exists) the store
-   * with the given id and returns it's state.
-   */
-  checkout<
-    TState extends Readonly<
-      Infer<TSchema> &
-      { [K in keyof TTransactions]: (input: Infer<TTransactions[K]['input']>) => void }
-    >
-  >(id: string): TState {
-    const state = {};
-    return state as TState;
+  /** Creates or loads the store's state based on the given options. */
+  checkout(options: CheckoutOptions) {
+    // TODO - The options should include the providers and any db.
+    // TODO - Create or load the store's state based on the given options and
+    //        return a proxy object.
   }
 }

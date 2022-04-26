@@ -13,13 +13,28 @@ export type Infer<TSchema extends Schema>
   : TSchema extends SuperStructSchema ? superstruct.Infer<TSchema>
   : never;
 
-export type Mutation<TSchema extends Schema, TInput extends Schema>
-  = (state: Infer<TSchema>, input: Infer<TInput>) => void;
+export type OpenOptions<TSchema extends Schema> = {
+  schema: TSchema;
+};
 
-export type Transaction<TSchema extends Schema, TInput extends Schema> = {
-  input: TInput;
-  mutate: Mutation<TSchema, TInput>;
-}
+export type Transaction<
+  TName extends string,
+  TSchema extends Schema,
+  TInput extends Schema
+> = {
+  /** The name of the transaction. */
+  name: TName;
 
-export type AnyTransaction = Transaction<any, any>;
+  /** (Optional) The transactions input schema. */
+  input?: TInput;
+
+  /** The function that handles the transaction. */
+  transact: (state: Infer<TSchema>, input: Infer<TInput>) => void;
+};
+
+export type AnyTransaction = Transaction<any, any, any>
 export type Transactions = Record<string, AnyTransaction>;
+
+export type CheckoutOptions = {
+
+};
