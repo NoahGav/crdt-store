@@ -1,4 +1,7 @@
-import { Infer, Mutation, Schema, Transaction, Transactions } from "./types";
+import { z } from "zod";
+import * as yup from 'yup';
+import * as superstruct from 'superstruct';
+import { Infer, Mutation, Schema, SuperStructSchema, Transaction, Transactions, YupSchema, ZodSchema } from "./types";
 
 /**
  * A store defines the schema and the transactions for a crdt
@@ -45,23 +48,26 @@ export class Store<
     TSchema,
     TTransactions & Record<TName, Transaction<TSchema, TInput>>
   > {
-    // TODO - Merge this store and the new store with the transaction.
-    return new Store();
+    // Merge this transaction with the existing transactions.
+    this.transactions = {
+      ...this.transactions,
+      [name]: { input, mutate }
+    };
+
+    return this;
   }
 
   /** 
    * Creates (or loads if it already exists) the store
    * with the given id and returns it's state.
    */
-  checkout(id: string): Readonly<Infer<TSchema>> {
-    // TODO - checkout the store with the given id.
-    //        This store is either created or loaded
-    //        from some kind of database. The way
-    //        it is loaded, saved, and updated needs
-    //        to be generic. The object returned from
-    //        this needs to be a readonly proxy where
-    //        the only changes that are allowed come
-    //        from the transaction functions.
-    return {} as any;
+  checkout<
+    TState extends Readonly<
+      Infer<TSchema> &
+      { [K in keyof TTransactions]: (input: Infer<TTransactions[K]['input']>) => void }
+    >
+  >(id: string): TState {
+    const state = {};
+    return state as TState;
   }
 }
