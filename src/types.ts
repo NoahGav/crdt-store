@@ -2,6 +2,10 @@ import { z } from 'zod';
 import * as yup from 'yup';
 import * as superstruct from 'superstruct';
 
+export { z } from 'zod';
+export * as yup from 'yup';
+export * as superstruct from 'superstruct';
+
 export type ZodSchema = z.Schema;
 export type YupSchema = yup.AnySchema;
 export type SuperStructSchema = superstruct.Struct<any, any>;
@@ -19,7 +23,11 @@ export type Infer<TSchema extends Schema>
   : never;
 
 export type OpenOptions<TSchema extends ObjectSchema> = {
+  /** The store's shared state schema. */
   schema: TSchema;
+
+  /** The store's initial value. */
+  default: () => Infer<TSchema>;
 };
 
 export type Transaction<
@@ -40,6 +48,14 @@ export type Transaction<
 export type AnyTransaction = Transaction<any, any, any>
 export type Transactions = Record<string, AnyTransaction>;
 
-export type CheckoutOptions = {
+export type Library = 'none' | 'react' | 'vue';
 
+export type CheckoutOptions = {
+  /** (Optional) The reactive rendering library you are using ('react' or 'vue'). */
+  library?: Library;
 };
+
+export type CheckoutType<
+  TSchema extends ObjectSchema,
+  TTransactions extends Transactions
+> = Infer<TSchema> & { [K in keyof TTransactions]: (input: Infer<TTransactions[K]['input']>) => void };
