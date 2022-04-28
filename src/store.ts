@@ -1,7 +1,7 @@
 import * as t from './types';
 import * as Y from 'yjs';
 
-// TODO - Document and add options (especially for checkout for 'react' and 'vue' library).
+// TODO - Document.
 export class Store<TState, TTransactions extends t.TransactionRecord> {
   private defaults: () => TState;
   private transactions: Record<string, (doc: any, proxy: any, args: any[]) => void> = {};
@@ -34,11 +34,15 @@ export class Store<TState, TTransactions extends t.TransactionRecord> {
     const state = doc.getMap();
     const obj = {} as Record<string, any>;
 
+    // This returns the reactive version of the proxy depending on the library being used.
+    const reactive = options.reactive ? options.reactive : (obj: any) => obj;
+
     // Create the store's state proxy.
-    const proxy = new Proxy(obj, {
+    const proxy = reactive(new Proxy(obj, {
       get: (obj, key: string) => {
         // If the key is a transaction then return a transaction function.
-        if (this.transactions[key]) return (...args: any[]) => this.transactions[key](doc, proxy, args);
+        if (this.transactions[key])
+          return (...args: any[]) => this.transactions[key](doc, proxy, args);
 
         // Otherwise, return the state's key-value.
         return obj[key] = state.get(key);
@@ -52,7 +56,7 @@ export class Store<TState, TTransactions extends t.TransactionRecord> {
         obj[key] = state.set(key, value);
         return true;
       }
-    });
+    }));
 
     // TODO - Only apply defaults if this is the first time this store's state is created.
     const defaults = this.defaults();

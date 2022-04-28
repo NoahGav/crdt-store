@@ -1,3 +1,5 @@
+import * as vue from 'vue';
+
 export type Transact<TState> = (state: TState, ...args: any[]) => void;
 export type AnyTransact = Transact<any>;
 
@@ -19,9 +21,10 @@ export type OpenOptions<TState> = {
   defaults: () => TState;
 };
 
-export type Library = 'none' | 'react' | 'vue';
-
 export type CheckoutOptions = {
-  /** (Optional) The reactive rendering library you are using. */
-  library?: Library;
+  /**
+   * The reactive function imported from the vue library.
+   * This is required if you want a reactive state with vue.
+   */
+  reactive?: typeof vue.reactive;
 };
