@@ -1,5 +1,3 @@
-import * as vue from 'vue';
-
 export type Transact<TState> = (state: TState, ...args: any[]) => void;
 export type AnyTransact = Transact<any>;
 
@@ -26,5 +24,5 @@ export type CheckoutOptions = {
    * The reactive function imported from the vue library.
    * This is required if you want a reactive state with vue.
    */
-  reactive?: typeof vue.reactive;
+  reactive?: (target: object) => object;
 };
