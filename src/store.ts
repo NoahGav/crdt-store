@@ -39,34 +39,34 @@ export class Store<
 
   /** Loads (or creates) the store's state based on the given options. */
   checkout(options: t.CheckoutOptions): t.CheckoutType<TSchema, TTransactions> {
-    // TODO - Load doc from db if the options say so.
     const doc = new Y.Doc();
     const state = doc.getMap();
     const proxy = {} as Record<string, any>;
 
+    // TODO - Only set default values if this store is being created for the first time.
     const values = this.options.default();
     for (const key in values) state.set(key, values[key]);
 
-    if ((this.options.schema as t.ZodSchema).parse) {
-      const shape = (this.options.schema as t.ZodObjectSchema).shape;
+    // Add the getters and setters for the state's properties.
+    const schema = this.options.schema as any;
+    const props = schema.parse ? schema.shape : schema.isValid ? schema.fields : null;
 
-      for (const key in shape) {
-        // TODO - Check object schema for shape function. If it exists
-        //        shape[key] is a map and we need to recurse.
-        Object.defineProperty(proxy, key, {
-          get() {
-            return state.get(key);
-          },
+    for (const prop in props) {
+      Object.defineProperty(proxy, prop, {
+        get() {
+          return state.get(prop);
+        },
 
-          set(value) {
-            return state.set(key, value);
-          },
+        set(value) {
+          // TODO - Validate schema.
+          state.set(prop, value);
+        },
 
-          enumerable: true
-        });
-      }
+        enumerable: true
+      });
     }
 
+    // Create the transaction functions.
     for (const key in this.transactions) {
       Object.defineProperty(proxy, key, {
         value: (input: any) => {
@@ -78,71 +78,18 @@ export class Store<
       });
     }
 
+    // TODO - Currently this works. The only problem is that since it is not recursive we cannot
+    //        check to see if the value passed into the setter matches the schema that was defined.
+    //
+    // TODO - Add support for when options.library is either vue or react. What this will
+    //        do is simply return the vue or react equivalent of the proxy so that you can
+    //        use the state like normal and it will work automatically with vue/react.
+    //
+    // TODO - When a store's state is first created (not loaded) we need to set the doc's values
+    //        to the store's default values.
+    //
+    // TODO - Validate default values against this.options.schema.
+
     return proxy as any;
-
-    // // TODO - Add support for when options.library is either vue or react. What this will
-    // //        do is simply return the vue or react equivalent of the proxy so that you can
-    // //        use the state like normal and it will work automatically with vue/react.
-    // //
-    // // TODO - When a store's state is first created (not loaded) we need to set the doc's values
-    // //        to the store's default values.
-    // //
-    // // TODO - validate default values against this.options.schema.
-    // //
-    // // TODO - Create the proxy simply by looping through this.options.schema and defining a property
-    // //        with a getter and setter for each property recursively. Also, add transaction functions.
-
-    // const values = this.options.default();
-    // state.set('name', values.name);
-    // state.set('users', values.users);
-    
-    // Object.defineProperties(proxy, {
-    //   name: {
-    //     get() {
-    //       // TODO - If the value that we get is not valid to our schema then we should
-    //       //        set the value to the default and return that or something (maybe something else).
-    //       return state.get('name');
-    //     },
-  
-    //     set(value) {
-    //       // TODO - Validate input schema.
-    //       state.set('name', value);
-    //     },
-
-    //     enumerable: true
-    //   },
-
-    //   users: {
-    //     get() {
-    //       return state.get('users');
-    //     },
-
-    //     set(value) {
-    //       return state.set('users', value);
-    //     },
-
-    //     enumerable: true
-    //   },
-
-    //   setName: {
-    //     value: (input: string) => {
-    //       // TODO - Validate input schema.
-    //       Y.transact(doc, () => this.transactions['setName'].transact(proxy, input));
-    //     },
-
-    //     enumerable: true
-    //   },
-
-    //   addUser: {
-    //     value: (input: string) => {
-    //       // TODO - Validate input schema.
-    //       Y.transact(doc, () => this.transactions['addUser'].transact(proxy, input));
-    //     },
-
-    //     enumerable: true
-    //   }
-    // });
-
-    // return proxy as any;
   }
 }

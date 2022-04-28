@@ -1,25 +1,21 @@
 import { z } from 'zod';
 import * as yup from 'yup';
-import * as superstruct from 'superstruct';
 
 export { z } from 'zod';
 export * as yup from 'yup';
-export * as superstruct from 'superstruct';
 
 export type ZodSchema = z.Schema;
 export type YupSchema = yup.AnySchema;
-export type SuperStructSchema = superstruct.Struct<any, any>;
-export type Schema = ZodSchema | YupSchema | SuperStructSchema;
+export type Schema = ZodSchema | YupSchema;
 
 export type ZodObjectSchema = z.ZodObject<any>;
 export type YupObjectSchema = yup.AnyObjectSchema;
-export type SuperStructObjectSchema = superstruct.Struct<any, any>;
-export type ObjectSchema = ZodObjectSchema | YupObjectSchema | SuperStructObjectSchema;
+// TODO - Figure out.
+export type ObjectSchema = ZodObjectSchema | YupObjectSchema;
 
 export type Infer<TSchema extends Schema>
   = TSchema extends ZodSchema ? z.infer<TSchema>
   : TSchema extends YupSchema ? yup.InferType<TSchema>
-  : TSchema extends SuperStructSchema ? superstruct.Infer<TSchema>
   : never;
 
 export type OpenOptions<TSchema extends ObjectSchema> = {
