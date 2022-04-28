@@ -1,57 +1,16 @@
-import { z } from 'zod';
-import * as yup from 'yup';
+export type Transact<TState> = (state: TState, ...args: any[]) => void;
+export type AnyTransact = Transact<any>;
 
-export { z } from 'zod';
-export * as yup from 'yup';
-
-export type ZodSchema = z.Schema;
-export type YupSchema = yup.AnySchema;
-export type Schema = ZodSchema | YupSchema;
-
-export type ZodObjectSchema = z.ZodObject<any>;
-export type YupObjectSchema = yup.AnyObjectSchema;
-// TODO - Figure out.
-export type ObjectSchema = ZodObjectSchema | YupObjectSchema;
-
-export type Infer<TSchema extends Schema>
-  = TSchema extends ZodSchema ? z.infer<TSchema>
-  : TSchema extends YupSchema ? yup.InferType<TSchema>
-  : never;
-
-export type OpenOptions<TSchema extends ObjectSchema> = {
-  /** The store's shared state schema. */
-  schema: TSchema;
-
-  /** The store's initial value. */
-  default: () => Infer<TSchema>;
-};
-
-export type Transaction<
-  TName extends string,
-  TSchema extends Schema,
-  TInput extends Schema
-> = {
-  /** The name of the transaction. */
+export type Transaction<TState, TName extends string, TTransact extends Transact<TState>> = {
   name: TName;
+  transact: TTransact;
+}
 
-  /** (Optional) The transactions input schema. */
-  input?: TInput;
+export type AnyTransaction = Transaction<any, any, any>;
+export type TransactionRecord = Record<string, AnyTransaction>
 
-  /** The function that handles the transaction. */
-  transact: (state: Infer<TSchema>, input: Infer<TInput>) => void;
-};
+export type TransactArgs<TTransact extends Transact<any>>
+  = Parameters<TTransact> extends [infer _, ...infer TArgs] ? TArgs : never;
 
-export type AnyTransaction = Transaction<any, any, any>
-export type Transactions = Record<string, AnyTransaction>;
-
-export type Library = 'none' | 'react' | 'vue';
-
-export type CheckoutOptions = {
-  /** (Optional) The reactive rendering library you are using ('react' or 'vue'). */
-  library?: Library;
-};
-
-export type CheckoutType<
-  TSchema extends ObjectSchema,
-  TTransactions extends Transactions
-> = Infer<TSchema> & { [K in keyof TTransactions]: (input: Infer<TTransactions[K]['input']>) => void };
+export type Transactions<TTransactions extends TransactionRecord>
+  = { [K in keyof TTransactions]: (...args: TransactArgs<TTransactions[K]['transact']>) => void };
