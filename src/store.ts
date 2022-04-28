@@ -4,14 +4,14 @@ import * as Y from 'yjs';
 // TODO - Document and add options (especially for checkout for 'react' and 'vue' library).
 export class Store<TState, TTransactions extends t.TransactionRecord> {
   private defaults: () => TState;
-  private transactions: TTransactions = {} as TTransactions;
+  private transactions: Record<string, (doc: any, proxy: any, args: any[]) => void> = {};
 
   constructor(defaults: () => TState) {
     this.defaults = defaults;
   }
 
-  static open<TState>(defaults: () => TState): Store<TState, {}> {
-    return new Store(defaults);
+  static open<TState>(options: t.OpenOptions<TState>): Store<TState, {}> {
+    return new Store(options.defaults);
   }
 
   transaction<
@@ -25,11 +25,11 @@ export class Store<TState, TTransactions extends t.TransactionRecord> {
     TState,
     TTransactions & Record<TName, TTransaction>
   > {
-    this.transactions[name] = { name, transact } as any;
+    this.transactions[name] = (doc, proxy, args) => Y.transact(doc, () => transact(proxy, ...args));
     return this as any;
   }
 
-  checkout(): TState & t.Transactions<TTransactions> {
+  checkout(options: t.CheckoutOptions): TState & t.Transactions<TTransactions> {
     const doc = new Y.Doc();
     const state = doc.getMap();
     const obj = {} as Record<string, any>;
@@ -38,12 +38,7 @@ export class Store<TState, TTransactions extends t.TransactionRecord> {
     const proxy = new Proxy(obj, {
       get: (obj, key: string) => {
         // If the key is a transaction then return a transaction function.
-        // TODO - Could probably optimize by creating this transactions in advance.
-        if (this.transactions[key]) {
-          return (...args: any) => {
-            Y.transact(doc, () => this.transactions[key].transact(proxy, ...args));
-          };
-        }
+        if (this.transactions[key]) return (...args: any[]) => this.transactions[key](doc, proxy, args);
 
         // Otherwise, return the state's key-value.
         return obj[key] = state.get(key);

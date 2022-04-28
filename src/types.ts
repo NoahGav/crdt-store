@@ -14,3 +14,14 @@ export type TransactArgs<TTransact extends Transact<any>>
 
 export type Transactions<TTransactions extends TransactionRecord>
   = { [K in keyof TTransactions]: (...args: TransactArgs<TTransactions[K]['transact']>) => void };
+
+export type OpenOptions<TState> = {
+  defaults: () => TState;
+};
+
+export type Library = 'none' | 'react' | 'vue';
+
+export type CheckoutOptions = {
+  /** (Optional) The reactive rendering library you are using. */
+  library?: Library;
+};
