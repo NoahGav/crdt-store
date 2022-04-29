@@ -12,8 +12,8 @@ export type TransactionRecord = Record<string, AnyTransaction>
 export type TransactArgs<TTransact extends Transact<any>>
   = Parameters<TTransact> extends [infer _, ...infer TArgs] ? TArgs : never;
 
-export type Transactions<TTransactions extends TransactionRecord>
-  = { [K in keyof TTransactions]: (...args: TransactArgs<TTransactions[K]['transact']>) => void };
+export type TransactionArgs<TTransaction extends AnyTransaction>
+  = TransactArgs<TTransaction['transact']>;
 
 export type OpenOptions<TState> = {
   defaults: () => TState;

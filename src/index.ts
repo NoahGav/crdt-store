@@ -1,4 +1,1 @@
-import { Store } from './store';
-
-export { Store } from './store';
-export default Store;
+export { Store, State } from './store';

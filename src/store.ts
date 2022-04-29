@@ -3,10 +3,10 @@ import * as Y from 'yjs';
 
 // TODO - Document.
 export class Store<TState, TTransactions extends t.TransactionRecord> {
-  private defaults: () => TState;
-  private transactions: Record<string, (doc: any, proxy: any, args: any[]) => void> = {};
+  defaults: () => TState;
+  transactions: Record<string, (doc: any, proxy: any, args: any[]) => void> = {};
 
-  constructor(defaults: () => TState) {
+  private constructor(defaults: () => TState) {
     this.defaults = defaults;
   }
 
@@ -29,7 +29,23 @@ export class Store<TState, TTransactions extends t.TransactionRecord> {
     return this as any;
   }
 
-  checkout(options: t.CheckoutOptions): TState & t.Transactions<TTransactions> {
+  checkout(options: t.CheckoutOptions): State<TState, TTransactions> {
+    return State.init(this, options);
+  }
+}
+
+export class State<TState, TTransactions extends t.TransactionRecord> {
+  private _doc: Y.Doc;
+  private _store: Store<any, any>;
+  private _proxy: Record<string, any>;
+
+  private constructor(doc: Y.Doc, store: Store<any, any>, proxy: Record<string, any>) {
+    this._doc = doc;
+    this._store = store;
+    this._proxy = proxy;
+  }
+
+  static init(store: Store<any, any>, options: t.CheckoutOptions): State<any, any> {
     const doc = new Y.Doc();
     const state = doc.getMap();
     const obj = {} as Record<string, any>;
@@ -39,29 +55,34 @@ export class Store<TState, TTransactions extends t.TransactionRecord> {
 
     // Create the store's state proxy.
     const proxy = reactive(new Proxy(obj, {
-      get: (obj, key: string) => {
-        // If the key is a transaction then return a transaction function.
-        if (this.transactions[key])
-          return (...args: any[]) => this.transactions[key](doc, proxy, args);
-
-        // Otherwise, return the state's key-value.
-        return obj[key] = state.get(key);
-      },
+      get: (obj, key: string) => obj[key] = state.get(key),
 
       set: (obj, key: string, value) => {
-        // If the key is a transaction then throw an error.
-        if (this.transactions[key]) return false;
-        
-        // Otherwize, set the state's key-value.
         obj[key] = state.set(key, value);
         return true;
       }
     }));
 
     // TODO - Only apply defaults if this is the first time this store's state is created.
-    const defaults = this.defaults();
-    for (const key in defaults) proxy[key] = defaults[key];
+    const defaults = store.defaults();
+    for (const key in defaults) obj[key] = defaults[key];
 
-    return proxy as any;
+    return new State(doc, store, proxy);
   }
+  
+  get value(): TState {
+    return this._proxy as TState;
+  }
+
+  transact<
+    TTransaction extends string & keyof TTransactions
+  >(
+    transaction: TTransaction,
+    ...args: t.TransactionArgs<TTransactions[TTransaction]>
+  ) {
+    this._store.transactions[transaction](this._doc, this._proxy, args);
+  }
+
+  encodeChanges() { return Y.encodeStateAsUpdate(this._doc); }
+  applyChanges(changes: Uint8Array) { Y.applyUpdate(this._doc, changes); }
 }
