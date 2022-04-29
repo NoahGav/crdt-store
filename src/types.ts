@@ -15,10 +15,6 @@ export type TransactArgs<TTransact extends Transact<any>>
 export type TransactionArgs<TTransaction extends AnyTransaction>
   = TransactArgs<TTransaction['transact']>;
 
-export type OpenOptions<TState> = {
-  defaults: () => TState;
-};
-
 export type CheckoutOptions = {
   /**
    * The reactive function imported from the vue library.

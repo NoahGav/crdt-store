@@ -4,15 +4,10 @@ import { State } from './state';
 
 // TODO - Document.
 export class Store<TState, TTransactions extends t.TransactionRecord> {
-  defaults: () => TState;
   transactions: Record<string, (doc: any, proxy: any, args: any[]) => void> = {};
 
-  private constructor(defaults: () => TState) {
-    this.defaults = defaults;
-  }
-
-  static open<TState>(options: t.OpenOptions<TState>): Store<TState, {}> {
-    return new Store(options.defaults);
+  static open<TState>(): Store<Partial<TState>, {}> {
+    return new Store();
   }
 
   transaction<

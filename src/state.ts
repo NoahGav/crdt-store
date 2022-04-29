@@ -31,10 +31,6 @@ export class State<TState, TTransactions extends t.TransactionRecord> {
       }
     }));
 
-    // TODO - Only apply defaults if this is the first time this store's state is created.
-    const defaults = store.defaults();
-    for (const key in defaults) obj[key] = defaults[key];
-
     return new State(doc, store, proxy);
   }
   
