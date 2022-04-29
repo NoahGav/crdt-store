@@ -1,1 +1,2 @@
-export { Store, State } from './store';
+export { Store } from './store';
+export { State } from './state';
